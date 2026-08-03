@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/widgets/new_product_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
-import '../model/product_model.dart';
-import '../provider/product_provider.dart';
-import 'product_bottom_sheet.dart';
+import '../model/new_product_model.dart';
+import '../provider/new_product_provider.dart';
 
-class ProductCard extends StatelessWidget {
-  final ProductModel product;
+class NewProductCard extends StatelessWidget {
+  final NewProductModel product;
 
-  const ProductCard({super.key, required this.product});
+  const NewProductCard({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
-    final productProvider = context.watch<ProductProvider>();
+    final productProvider = context.watch<NewProductProvider>();
     final isWishlisted = productProvider.isInWishlist(product.id);
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => ProductBottomSheet.show(context, product),
+      onTap: () => NewProductBottomSheet.show(context, product),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -42,7 +42,7 @@ class ProductCard extends StatelessWidget {
                     ),
                     child: SizedBox.expand(
                       child: Image.network(
-                        product.imageUrl,
+                        product.images.first,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -57,6 +57,8 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  // Wishlist Button
                   Positioned(
                     top: 10,
                     right: 10,
@@ -67,7 +69,7 @@ class ProductCard extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         iconSize: 18,
                         onPressed: () {
-                          context.read<ProductProvider>().toggleWishlist(
+                          context.read<NewProductProvider>().toggleWishlist(
                             product,
                           );
                         },
@@ -78,6 +80,8 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  // Add to Cart Button
                   Positioned(
                     bottom: 10,
                     right: 10,
@@ -87,12 +91,12 @@ class ProductCard extends StatelessWidget {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(10),
                         onTap: () {
-                          context.read<ProductProvider>().addToCart(product);
+                          context.read<NewProductProvider>().addToCart(product);
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text("${product.name} added to cart"),
-                              duration: Duration(seconds: 2),
+                              content: Text("${product.title} added to cart"),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         },
@@ -106,57 +110,38 @@ class ProductCard extends StatelessWidget {
                 ],
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        product.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
                   Text(
-                    product.name,
-                    maxLines: 1,
+                    product.category.name,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    product.title,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
                   ),
+
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: Color(0xFF2563EB),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      if (product.oldPrice != null) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '\$${product.oldPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            decoration: TextDecoration.lineThrough,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ],
+
+                  Text(
+                    "\$${product.price}",
+                    style: const TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),

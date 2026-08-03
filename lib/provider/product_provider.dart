@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/model/cart_item_model.dart';
 
 import '../model/product_model.dart';
 
@@ -87,9 +88,11 @@ class ProductProvider extends ChangeNotifier {
   ];
 
   final List<ProductModel> _wishlist = [];
+  final List<CartItemModel> _cart = [];
 
   List<ProductModel> get products => List.unmodifiable(_products);
   List<ProductModel> get wishlistItems => List.unmodifiable(_wishlist);
+  List<CartItemModel> get cartItems => List.unmodifiable(_cart);
 
   void addProduct(ProductModel product) {
     _products.add(product);
@@ -129,15 +132,82 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // void toggleWishlist(ProductModel product) {
- 
-  // }
+  void toggleWishlist(ProductModel product) {
+    final exists = _wishlist.any((item) => item.id == product.id);
 
-  // bool isInWishlist(String id) {
-    
-  // }
+    if (exists) {
+      _wishlist.removeWhere((item) => item.id == product.id);
+    } else {
+      _wishlist.add(product);
+    }
+
+    notifyListeners();
+  }
+
+  bool isInWishlist(String id) {
+    return _wishlist.any((product) => product.id == id);
+  }
 
   // void clearWishlist() {
 
   // }
+
+  void addToCart(ProductModel product) {
+    final index = _cart.indexWhere((item) => item.product.id == product.id);
+
+    if (index != -1) {
+      _cart[index].quantity++;
+    } else {
+      _cart.add(CartItemModel(product: product));
+    }
+
+    // print("Cart length: ${_cart.length}");
+    // for (final item in _cart) {
+    //   print("${item.product.name} - Qty: ${item.quantity}");
+    // }
+
+    notifyListeners();
+  }
+
+  void increaseQuantity(String productId) {
+    final index = _cart.indexWhere((item) => item.product.id == productId);
+
+    if (index != -1) {
+      _cart[index].quantity++;
+      notifyListeners();
+    }
+  }
+
+  void decreaseQuantity(String productId) {
+    final index = _cart.indexWhere((item) => item.product.id == productId);
+
+    if (index == -1) return;
+
+    if (_cart[index].quantity > 1) {
+      _cart[index].quantity--;
+    } else {
+      _cart.removeAt(index);
+    }
+
+    notifyListeners();
+  }
+
+  void removeFromCart(String productId) {
+    _cart.removeWhere((item) => item.product.id == productId);
+
+    notifyListeners();
+  }
+
+  void clearCart() {
+    _cart.clear();
+    notifyListeners();
+  }
+
+  double get totalPrice {
+    return _cart.fold(0, (sum, item) => sum + item.totalPrice);
+  }
+
+  int get totalItems {
+    return _cart.fold(0, (sum, item) => sum + item.quantity);
+  }
 }

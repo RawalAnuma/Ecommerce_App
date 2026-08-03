@@ -1,20 +1,20 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/provider/product_provider.dart';
+import 'package:my_app/model/new_product_model.dart';
+import 'package:my_app/provider/new_product_provider.dart';
 import 'package:provider/provider.dart';
 
-import '../model/product_model.dart';
+class NewProductBottomSheet extends StatelessWidget {
+  final NewProductModel product;
 
-class ProductBottomSheet extends StatelessWidget {
-  final ProductModel product;
+  const NewProductBottomSheet({super.key, required this.product});
 
-  const ProductBottomSheet({super.key, required this.product});
-
-  static Future<void> show(BuildContext context, ProductModel product) {
+  static Future<void> show(BuildContext context, NewProductModel product) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ProductBottomSheet(product: product),
+      builder: (_) => NewProductBottomSheet(product: product),
     );
   }
 
@@ -52,20 +52,33 @@ class ProductBottomSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                     child: AspectRatio(
                       aspectRatio: 1.2,
-                      child: Image.network(
-                        product.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: const Color(0xFFF1F3F5),
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.image_not_supported_outlined,
-                              color: Colors.black38,
-                              size: 36,
-                            ),
+                      child: CarouselSlider.builder(
+                        itemCount: product.images.length,
+                        itemBuilder: (context, index, realIndex) {
+                          return Image.network(
+                            product.images[index],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: const Color(0xFFF1F3F5),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: Colors.black38,
+                                  size: 36,
+                                ),
+                              );
+                            },
                           );
                         },
+                        options: CarouselOptions(
+                          height: double.infinity,
+                          viewportFraction: 1.0,
+                          enableInfiniteScroll: product.images.length > 1,
+                          autoPlay: product.images.length > 1,
+                          autoPlayInterval: const Duration(seconds: 3),
+                        ),
                       ),
                     ),
                   ),
@@ -74,28 +87,28 @@ class ProductBottomSheet extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          product.name,
+                          product.title,
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 18),
-                          const SizedBox(width: 4),
-                          Text(
-                            product.rating.toStringAsFixed(1),
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     const Icon(Icons.star, color: Colors.amber, size: 18),
+                      //     const SizedBox(width: 4),
+                      //     Text(
+                      //       product.rating.toStringAsFixed(1),
+                      //       style: const TextStyle(fontWeight: FontWeight.w700),
+                      //     ),
+                      //   ],
+                      // ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    product.category,
+                    product.category.name,
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w600,
@@ -112,22 +125,22 @@ class ProductBottomSheet extends StatelessWidget {
                           color: Color(0xFF2563EB),
                         ),
                       ),
-                      if (product.oldPrice != null) ...[
-                        const SizedBox(width: 12),
-                        Text(
-                          '\$${product.oldPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
+                      // if (product.oldPrice != null) ...[
+                      //   const SizedBox(width: 12),
+                      //   Text(
+                      //     '\$${product.oldPrice!.toStringAsFixed(2)}',
+                      //     style: const TextStyle(
+                      //       fontSize: 16,
+                      //       color: Colors.grey,
+                      //       decoration: TextDecoration.lineThrough,
+                      //     ),
+                      //   ),
+                      // ],
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'This bottom sheet can be used for product details, quick actions, cart, and wishlist controls.',
+                  Text(
+                    product.description,
                     style: TextStyle(fontSize: 14, height: 1.5),
                   ),
                   const SizedBox(height: 20),
@@ -150,7 +163,7 @@ class ProductBottomSheet extends StatelessWidget {
                         child: FilledButton(
                           onPressed: () {
                             final messenger = ScaffoldMessenger.of(context);
-                            context.read<ProductProvider>().addToCart(
+                            context.read<NewProductProvider>().addToCart(
                               product,
                             );
 
@@ -158,7 +171,7 @@ class ProductBottomSheet extends StatelessWidget {
 
                             messenger.showSnackBar(
                               SnackBar(
-                                content: Text("${product.name}added to cart"),
+                                content: Text("${product.title}added to cart"),
                                 duration: const Duration(seconds: 2),
                               ),
                             );

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/screens/category_screen.dart';
+import 'package:my_app/screens/new_product_screen.dart';
+import 'package:my_app/screens/user_screen.dart';
+//import 'package:my_app/screens/cart_screen.dart';
 
 import 'empty_page.dart';
 import 'home_screen.dart';
 import 'wishlist_screen.dart';
+import 'cart_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,10 +21,11 @@ class _MainShellState extends State<MainShell> {
 
   late final List<Widget> pages = [
     const HomeScreen(),
-    const EmptyPage(title: 'Categories', icon: Icons.grid_view_outlined),
-    const EmptyPage(title: 'Cart', icon: Icons.shopping_bag_outlined),
+    //const NewProductScreen(),
+    const CategoryScreen(),
+    const CartScreen(),
     const WishlistScreen(),
-    const EmptyPage(title: 'Profile', icon: Icons.person_outline),
+    const UsersScreen(),
   ];
 
   @override
@@ -80,7 +86,7 @@ class _MainShellState extends State<MainShell> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            label: 'Profile',
+            label: 'Users',
           ),
         ],
       ),
@@ -92,6 +98,6 @@ class _MainShellState extends State<MainShell> {
     'Categories',
     'Cart',
     'Wishlist',
-    'Profile',
+    'Users',
   ];
 }

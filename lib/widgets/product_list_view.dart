@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/provider/new_product_provider.dart';
 import 'package:provider/provider.dart';
+import 'new_product_card.dart';
 
-import '../provider/product_provider.dart';
-import 'product_card.dart';
 
 class ProductListView extends StatelessWidget {
   const ProductListView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProductProvider>(
+    return Consumer<NewProductProvider>(
       builder: (context, provider, child) {
-        final products = provider.products;
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
         return GridView.builder(
           padding: const EdgeInsets.all(16),
@@ -21,9 +23,9 @@ class ProductListView extends StatelessWidget {
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
-          itemCount: products.length,
+          itemCount: provider.products.length,
           itemBuilder: (context, index) {
-            return ProductCard(product: products[index]);
+            return NewProductCard(product: provider.products[index]);
           },
         );
       },
