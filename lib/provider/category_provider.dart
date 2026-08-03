@@ -22,4 +22,73 @@ class CategoryProvider extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
+  Future<CategoryModel?> createCategory({
+    required String name,
+    required String image,
+  }) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      final createdCategory = await _service.createCategory({
+        "name": name,
+        "image": image,
+      });
+      categories.add(createdCategory);
+      return createdCategory;
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateCategory(int id, {String? name, String? image}) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      final existing = categories.firstWhere((category) => category.id == id);
+      final updates = <String, dynamic>{
+        "name": name ?? existing.name,
+        "image": image ?? existing.image,
+      };
+      final updated = await _service.updateCategory(id, updates);
+      final index = categories.indexWhere((category) => category.id == id);
+      if (index != -1) {
+        categories[index] = CategoryModel(
+          id: existing.id,
+          name: updated.name,
+          image: updated.image,
+          slug: updated.slug,
+        );
+      }
+      return true;
+    } catch (e) {
+      debugPrint(e.toString());
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteCategory(int id) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      final success = await _service.deleteCategory(id);
+      if (success) {
+        categories.removeWhere((category) => category.id == id);
+      }
+      return success;
+    } catch (e) {
+      debugPrint(e.toString());
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }
