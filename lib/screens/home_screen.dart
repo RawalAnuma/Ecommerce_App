@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/provider/new_product_provider.dart';
+import 'package:my_app/screens/login_page.dart';
 import 'package:provider/provider.dart';
-
-import '../provider/product_provider.dart';
 import '../widgets/product_list_view.dart';
 import 'new_product_screen.dart';
 
@@ -26,6 +25,24 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        // title: const Text(
+        //   "Luxury Essentials",
+        //   style: TextStyle(fontWeight: FontWeight.bold),
+        // ),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
+            },
+            icon: const Icon(Icons.login),
+            label: const Text('Login'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: "create_product",
         onPressed: () {
