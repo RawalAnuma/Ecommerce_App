@@ -70,9 +70,64 @@ class NewProductProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProduct(int id, {String? title, int? price}) async {
+    isLoading = true;
+    notifyListeners();
 
+    try {
+      final existing = products.firstWhere((product) => product.id == id);
 
+      final updates = <String, dynamic>{
+        'title': title ?? existing.title,
+        'price': price ?? existing.price,
+        'description': existing.description,
+        'categoryId': existing.category.id,
+        'images': existing.images,
+      };
 
+      final updated = await _apiService.updateProduct(id, updates);
+      final index = products.indexWhere((product) => product.id == id);
+
+      if (index != -1) {
+        final existing = products[index];
+        products[index] = NewProductModel(
+          id: existing.id,
+          title: updated.title,
+          slug: updated.slug ?? existing.slug,
+          price: updated.price,
+          description: existing.description,
+          category: existing.category,
+          images: existing.images,
+        );
+      }
+      return true;
+    } catch (e) {
+      debugPrint(e.toString());
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteProduct(int id) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final success = await _apiService.deleteProduct(id);
+      if (success) {
+        products.removeWhere((product) => product.id == id);
+      }
+      return success;
+    } catch (e) {
+      debugPrint(e.toString());
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 
   void toggleWishlist(NewProductModel product) {
     final exists = _wishlist.any((item) => item.id == product.id);
