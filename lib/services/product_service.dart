@@ -41,4 +41,40 @@ class ProductService {
       "${response.statusCode} ${response.body}",
     );
   }
+
+  Future<CreateProductModel> updateProduct(
+    int id,
+    Map<String, dynamic> updates,
+  ) async {
+    final response = await http.put(
+      Uri.parse('$url/$id'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(updates), //convert Dart Object to JSON string
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(
+        response.body,
+      ); // convert JSON string to Dart Object
+      return CreateProductModel.fromJson(data);
+    }
+
+    throw Exception(
+      "Failed to update product: "
+      "${response.statusCode} ${response.body}",
+    );
+  }
+
+  Future<bool> deleteProduct(int id) async {
+    final response = await http.delete(Uri.parse('$url/$id'));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) == true;
+    }
+
+    throw Exception(
+      "Failed to delete product: "
+      "${response.statusCode} ${response.body}",
+    );
+  }
 }
