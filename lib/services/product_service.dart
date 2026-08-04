@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:my_app/model/create_product_model.dart';
@@ -6,6 +7,8 @@ import 'package:my_app/model/new_product_model.dart';
 
 class ProductService {
   static const String url = "https://api.escuelajs.co/api/v1/products";
+  static const String uploadUrl =
+      "https://api.escuelajs.co/api/v1/files/upload";
 
   Future<List<NewProductModel>> fetchProducts() async {
     final response = await http.get(Uri.parse(url));
@@ -13,7 +16,9 @@ class ProductService {
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
 
-      return data.map((e) => NewProductModel.fromJson(e)).toList();
+      return data
+          .map((e) => NewProductModel.fromJson(e))
+          .toList();
     }
 
     throw Exception("Failed to load products");
@@ -74,6 +79,24 @@ class ProductService {
 
     throw Exception(
       "Failed to delete product: "
+      "${response.statusCode} ${response.body}",
+    );
+  }
+
+  Future<String> uploadImage(File file) async {
+    final request = http.MultipartRequest('POST', Uri.parse(uploadUrl))
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['location'];
+    }
+
+    throw Exception(
+      "Failed to upload image: "
       "${response.statusCode} ${response.body}",
     );
   }
