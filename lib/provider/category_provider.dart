@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:my_app/model/category_model.dart';
 import 'package:my_app/services/category_service.dart';
 
 class CategoryProvider extends ChangeNotifier {
-  final CategoryService _service = CategoryService();
+  CategoryProvider({CategoryService? apiService})
+    : _apiService = apiService ?? CategoryService();
+
+  final CategoryService _apiService;
 
   List<CategoryModel> categories = [];
 
@@ -14,7 +19,7 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      categories = await _service.fetchCategories();
+      categories = await _apiService.fetchCategories();
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -30,7 +35,7 @@ class CategoryProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      final createdCategory = await _service.createCategory({
+      final createdCategory = await _apiService.createCategory({
         "name": name,
         "image": image,
       });
@@ -54,7 +59,7 @@ class CategoryProvider extends ChangeNotifier {
         "name": name ?? existing.name,
         "image": image ?? existing.image,
       };
-      final updated = await _service.updateCategory(id, updates);
+      final updated = await _apiService.updateCategory(id, updates);
       final index = categories.indexWhere((category) => category.id == id);
       if (index != -1) {
         categories[index] = CategoryModel(
@@ -78,7 +83,7 @@ class CategoryProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      final success = await _service.deleteCategory(id);
+      final success = await _apiService.deleteCategory(id);
       if (success) {
         categories.removeWhere((category) => category.id == id);
       }
@@ -89,6 +94,15 @@ class CategoryProvider extends ChangeNotifier {
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<String?> uploadImage(File file) async {
+    try {
+      return await _apiService.uploadImage(file);
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
     }
   }
 }
