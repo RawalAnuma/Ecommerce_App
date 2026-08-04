@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:my_app/provider/category_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +21,22 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
     text: "https://placehold.co/600x400",
   );
 
+  File? _pickedImage;
+  bool _isUploadingImage = false;
+
+  Future<void> _pickImageFromGallery() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _pickedImage = File(picked.path);
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -31,10 +50,29 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
     }
 
     final provider = context.read<CategoryProvider>();
+    var imageUrl = _imageController.text.trim();
+
+    if (_pickedImage != null) {
+      setState(() => _isUploadingImage = true);
+      
+      final uploadedUrl = await provider.uploadImage(_pickedImage!);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isUploadingImage = false);
+
+      if (uploadedUrl == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to upload image')));
+        return;
+      }
+      imageUrl = uploadedUrl;
+    }
 
     final category = await provider.createCategory(
       name: _nameController.text.trim(),
-      image: _imageController.text.trim(),
+      image: imageUrl,
     );
 
     if (!mounted) {
@@ -43,22 +81,14 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
 
     if (category != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "${category.name} created successfully.",
-          ),
-        ),
+        SnackBar(content: Text("${category.name} created successfully.")),
       );
 
       // Go back to CategoryScreen
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Failed to create category.",
-          ),
-        ),
+        const SnackBar(content: Text("Failed to create category.")),
       );
     }
   }
@@ -113,14 +143,11 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                       controller: _nameController,
                       decoration: const InputDecoration(
                         labelText: "Category Name",
-                        prefixIcon: Icon(
-                          Icons.category_outlined,
-                        ),
+                        prefixIcon: Icon(Icons.category_outlined),
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return "Enter category name";
                         }
 
@@ -136,19 +163,51 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                       keyboardType: TextInputType.url,
                       decoration: const InputDecoration(
                         labelText: "Image URL",
-                        prefixIcon: Icon(
-                          Icons.image_outlined,
-                        ),
+                        prefixIcon: Icon(Icons.image_outlined),
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return "Enter image URL";
                         }
 
                         return null;
                       },
+                    ),
+
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        if (_pickedImage != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _pickedImage!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickImageFromGallery,
+                            icon: const Icon(Icons.photo_library_outlined),
+                            label: Text(
+                              _pickedImage == null
+                                  ? 'Pick image from gallery'
+                                  : 'Change picked image',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 25),
@@ -157,11 +216,16 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: provider.isLoading
+                        onPressed: provider.isLoading || _isUploadingImage
                             ? null
                             : _submit,
-
-                        icon: provider.isLoading
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: provider.isLoading || _isUploadingImage
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
@@ -170,12 +234,12 @@ class _CreateCategoryScreenState extends State<CreateCategoryScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Icon(
-                                Icons.add,
-                              ),
+                            : const Icon(Icons.add),
 
                         label: Text(
-                          provider.isLoading
+                          _isUploadingImage
+                              ? 'Uploading image ...'
+                              : provider.isLoading
                               ? "Creating..."
                               : "Create Category",
                         ),
