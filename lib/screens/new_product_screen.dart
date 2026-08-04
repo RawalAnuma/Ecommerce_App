@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:my_app/model/create_product_model.dart';
 import 'package:my_app/provider/category_provider.dart';
 import 'package:my_app/provider/new_product_provider.dart';
@@ -20,6 +23,21 @@ class _NewProductScreenState extends State<NewProductScreen> {
     text: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f',
   );
   int? _selectedCategoryId = 1;
+  File? _pickedImage;
+  bool _isUploadingImage = false;
+
+  Future<void> _pickImageFromGallery() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _pickedImage = File(picked.path);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -48,6 +66,25 @@ class _NewProductScreenState extends State<NewProductScreen> {
 
     final provider = context.read<NewProductProvider>();
 
+    var imageUrl = _imageController.text.trim();
+
+    if (_pickedImage != null) {
+      setState(() => _isUploadingImage = true);
+      final uploadedUrl = await provider.uploadImage(_pickedImage!);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isUploadingImage = false);
+
+      if (uploadedUrl == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to upload image')));
+        return;
+      }
+      imageUrl = uploadedUrl;
+    }
+
     final product = CreateProductModel(
       title: _titleController.text.trim(),
       price: int.tryParse(_priceController.text.trim()) ?? 0,
@@ -56,7 +93,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
       images: [
         _imageController.text.trim().isEmpty
             ? 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f'
-            : _imageController.text.trim(),
+            : imageUrl,
       ],
     );
 
@@ -239,18 +276,54 @@ class _NewProductScreenState extends State<NewProductScreen> {
                         prefixIcon: Icon(Icons.image_outlined),
                       ),
                     ),
+
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        if (_pickedImage != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(
+                              _pickedImage!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickImageFromGallery,
+                            icon: const Icon(Icons.photo_library_outlined),
+                            label: Text(
+                              _pickedImage == null
+                                  ? 'Pick image from gallery'
+                                  : 'Change picked image',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 18),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: provider.isLoading ? null : _submitForm,
+                        onPressed: provider.isLoading || _isUploadingImage? null : _submitForm,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        icon: provider.isLoading
+                        icon: provider.isLoading || _isUploadingImage 
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
@@ -261,6 +334,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
                               )
                             : const Icon(Icons.add_circle_outline),
                         label: Text(
+                          _isUploadingImage ? 'Uploading image...' :
                           provider.isLoading ? 'Creating...' : 'Create Product',
                         ),
                       ),
