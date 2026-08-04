@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:my_app/model/category_model.dart';
 import 'package:my_app/model/create_product_model.dart';
@@ -126,6 +128,15 @@ class NewProductProvider extends ChangeNotifier {
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<String?> uploadImage(File file) async {
+    try {
+      return await _apiService.uploadImage(file);
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
     }
   }
 
