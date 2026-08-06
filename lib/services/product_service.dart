@@ -18,6 +18,8 @@ class ProductService {
 
       return data
           .map((e) => NewProductModel.fromJson(e))
+          .toList()
+          .reversed
           .toList();
     }
 
