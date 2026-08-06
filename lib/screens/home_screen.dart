@@ -45,10 +45,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: "create_product",
-        onPressed: () {
-          Navigator.of(
+        onPressed: () async {
+          await Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const NewProductScreen()));
+
+          if (!mounted) return;
+          await context.read<NewProductProvider>().getProducts();
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Product'),
