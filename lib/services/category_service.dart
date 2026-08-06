@@ -15,7 +15,11 @@ class CategoryService {
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
 
-      return data.map((e) => CategoryModel.fromJson(e)).toList();
+      return data
+          .map((e) => CategoryModel.fromJson(e))
+          .toList()
+          .reversed
+          .toList();
     }
 
     throw Exception("Failed to load categories");
