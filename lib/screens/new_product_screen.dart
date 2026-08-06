@@ -115,6 +115,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Created: ${createdProduct.title}')),
       );
+      Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(
         context,
@@ -316,14 +317,16 @@ class _NewProductScreenState extends State<NewProductScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: provider.isLoading || _isUploadingImage? null : _submitForm,
+                        onPressed: provider.isLoading || _isUploadingImage
+                            ? null
+                            : _submitForm,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        icon: provider.isLoading || _isUploadingImage 
+                        icon: provider.isLoading || _isUploadingImage
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
@@ -334,8 +337,11 @@ class _NewProductScreenState extends State<NewProductScreen> {
                               )
                             : const Icon(Icons.add_circle_outline),
                         label: Text(
-                          _isUploadingImage ? 'Uploading image...' :
-                          provider.isLoading ? 'Creating...' : 'Create Product',
+                          _isUploadingImage
+                              ? 'Uploading image...'
+                              : provider.isLoading
+                              ? 'Creating...'
+                              : 'Create Product',
                         ),
                       ),
                     ),
