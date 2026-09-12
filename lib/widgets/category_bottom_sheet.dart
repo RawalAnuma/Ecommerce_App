@@ -30,13 +30,15 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
   Future<void> _showEditDialog(BuildContext context) async {
     final provider = context.read<CategoryProvider>();
 
-    final nameController = TextEditingController(text: widget.category.name);
-
     File? selectedImage = _pickedImage;
 
-    final confirmed = await showDialog<bool>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (dialogContext) {
+        final nameController = TextEditingController(
+          text: widget.category.name,
+        );
+
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
@@ -47,7 +49,6 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Category name
                       TextField(
                         controller: nameController,
                         decoration: const InputDecoration(
@@ -58,7 +59,6 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
 
                       const SizedBox(height: 16),
 
-                      // Image preview
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: SizedBox(
@@ -86,7 +86,6 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
 
                       const SizedBox(height: 12),
 
-                      // Change image button
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
@@ -114,16 +113,17 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(dialogContext, false);
+                    Navigator.pop(dialogContext);
                   },
                   child: const Text('Cancel'),
                 ),
 
                 FilledButton(
                   onPressed: () {
-                    _pickedImage = selectedImage;
-
-                    Navigator.pop(dialogContext, true);
+                    Navigator.pop(dialogContext, {
+                      'name': nameController.text.trim(),
+                      'image': selectedImage,
+                    });
                   },
                   child: const Text('Save'),
                 ),
@@ -134,13 +134,15 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
       },
     );
 
-    nameController.dispose();
-
-    if (confirmed != true || !context.mounted) {
+    if (result == null || !context.mounted) {
       return;
     }
 
-    // Existing image URL
+    final categoryName = result['name'] as String;
+    final newImage = result['image'] as File?;
+
+    _pickedImage = newImage;
+
     String imageUrl = widget.category.image;
 
     // Upload new image
@@ -163,7 +165,7 @@ class _CategoryBottomSheetState extends State<CategoryBottomSheet> {
     // Update category
     final success = await provider.updateCategory(
       widget.category.id,
-      name: nameController.text.trim(),
+      name: categoryName,
       image: imageUrl,
     );
 
