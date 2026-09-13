@@ -19,9 +19,7 @@ class _NewProductScreenState extends State<NewProductScreen> {
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _imageController = TextEditingController(
-    text: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f',
-  );
+  final _imageController = TextEditingController();
   int? _selectedCategoryId = 1;
   File? _pickedImage;
   bool _isUploadingImage = false;
@@ -66,23 +64,38 @@ class _NewProductScreenState extends State<NewProductScreen> {
 
     final provider = context.read<NewProductProvider>();
 
-    var imageUrl = _imageController.text.trim();
+    String imageUrl = _imageController.text.trim();
 
+    // If user selected an image from gallery, upload it first
     if (_pickedImage != null) {
       setState(() => _isUploadingImage = true);
-      final uploadedUrl = await provider.uploadImage(_pickedImage!);
-      if (!mounted) {
-        return;
-      }
-      setState(() => _isUploadingImage = false);
 
-      if (uploadedUrl == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to upload image')));
-        return;
+      try {
+        final uploadedUrl = await provider.uploadImage(_pickedImage!);
+
+        if (!mounted) return;
+
+        if (uploadedUrl == null || uploadedUrl.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload selected image')),
+          );
+          return;
+        }
+
+        imageUrl = uploadedUrl;
+
+        debugPrint('Selected image: ${_pickedImage!.path}');
+        debugPrint('Uploaded image URL: $imageUrl');
+      } finally {
+        if (mounted) {
+          setState(() => _isUploadingImage = false);
+        }
       }
-      imageUrl = uploadedUrl;
+    }
+
+    // Use default only when NO image was selected/provided
+    if (imageUrl.isEmpty) {
+      imageUrl = 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f';
     }
 
     final product = CreateProductModel(
@@ -90,18 +103,14 @@ class _NewProductScreenState extends State<NewProductScreen> {
       price: int.tryParse(_priceController.text.trim()) ?? 0,
       description: _descriptionController.text.trim(),
       categoryId: _selectedCategoryId ?? 1,
-      images: [
-        _imageController.text.trim().isEmpty
-            ? 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f'
-            : imageUrl,
-      ],
+      images: [imageUrl],
     );
+
+    debugPrint('Final product image URL: $imageUrl');
 
     final createdProduct = await provider.createProduct(product);
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     if (createdProduct != null) {
       _formKey.currentState!.reset();
@@ -109,12 +118,13 @@ class _NewProductScreenState extends State<NewProductScreen> {
       _priceController.clear();
       _descriptionController.clear();
       _selectedCategoryId = 1;
-      _imageController.text =
-          'https://images.unsplash.com/photo-1512436991641-6745cdb1723f';
+      _imageController.clear();
+      _pickedImage = null;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Created: ${createdProduct.title}')),
       );
+
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(
